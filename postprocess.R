@@ -35,8 +35,8 @@ for (i in 2:(dim(outputmat)[1])) {
     ref_site <- ref_site + 1
     site_suffix <- 1
   } else {
-    outputmat[i,((length(seq(1,length(input_fasta),2)))+1)] <- paste(ref_site,"_",site_suffix,sep="")
-    site_suffix <- site_suffix + 1
+    outputmat[i,((length(seq(1,length(input_fasta),2)))+1)] <- paste((ref_site-1),"_",site_suffix,sep="")
+    site_suffix <- site_suffix + 1    
   }
 }
  
