@@ -58,32 +58,81 @@ for (i in samplenames) { #2A
   
   #Pulling out the sequence for the sample we are interested in, so we can get the phasing blocks defined
   samplecols <- c(which(inputmatrix[1,] %in% paste(">",i,".1",sep="")),which(inputmatrix[1,] %in% paste(">",i,".2",sep="")))
-  tempsamplematrix <- matrix(NA,ncol=6,nrow=dim(inputmatrix)[1])
+  tempsamplematrix <- matrix(NA,ncol=7,nrow=dim(inputmatrix)[1])
   tempsamplematrix[,1] <- outputmat[,1]
-  tempsamplematrix[,2:3] <- inputmatrix[,samplecols]
-  tempsamplematrix[1,4] <- paste(i,"_phasing",sep="")
+  tempsamplematrix[,3:4] <- inputmatrix[,samplecols]
+  tempsamplematrix[1,5] <- paste(i,"_phasing",sep="")
   
   #Identifying the sites where there is more than one allele
   for (j in 2:dim(inputmatrix)[1]) {
-    if(!(tempsamplematrix[j,2]==tempsamplematrix[j,3])) {
-      tempsamplematrix[j,4] <- "Unknown"
+    if(!(tempsamplematrix[j,3]==tempsamplematrix[j,4])) {
+      tempsamplematrix[j,5] <- "Unknown"
     }
   }
   #Propogating the sequence over for sites that do not show signs of alternate alleles
-  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),5] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),2]
-  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),6] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),2]
+  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),6] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),3]
+  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),7] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),3]
+  
+  #Getting the reference relative to the sample.2.fa, because this is what the VCF is relative to
+  tempsamplematrix[1,2] <- "ref_sample"
+  ref_site <- 1
+  for (i in 2:(dim(tempsamplematrix)[1])) {
+    if(!(tempsamplematrix[i,4]=="-")) {
+      tempsamplematrix[i,2] <- ref_site
+      ref_site <- ref_site + 1
+      site_suffix <- 1
+    } else {
+      tempsamplematrix[i,2]  <- paste((ref_site-1),"_",site_suffix,sep="")
+      site_suffix <- site_suffix + 1    
+    }
+  }
+  
+  #Haplotype logging
+  hapmat <- NULL
   
   #Looping through the VCF file and propogating those bases to the output seq if the genotype is certain
-  for (j in 2:dim(VCFmat)[1]) {#3A
+  for (j in 1:dim(VCFmat)[1]) {#3A
     if(nchar(VCFmat[j,4])==nchar(gsub("PQ","",VCFmat[j,4]))) {#4A
        if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A
-       tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),5] <- VCFmat[j,2]
-       tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),6] <- VCFmat[j,3]
-       tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),4] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
+       tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
+       tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
+       tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
        } else { #5AB
        # what to do when no PQ and it is an indel  
        }  #5B
     } else { #4AB
+       if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A
+          haps <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[5],","))
+          if(is.null(hapmat)) {
+            hapmat <- t(as.matrix(haps))
+            tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
+            tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
+            read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+            tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+          } else {
+            if(haps[1] %in% hapmat) {
+              if(haps[1] %in% hapmat[,1]) {
+                tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
+                tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
+                read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+                tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+              } else {
+                
+                
+            } else {
+              hapmat <- rbind(hapmat,haps)
+              tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
+              tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
+              read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+              tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+            }
+              
+          #tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),5] <- VCFmat[j,2]
+          #tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),6] <- VCFmat[j,3]
+          #tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),4] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
+       } else { #5AB
+       # what to do when PQ and it is an indel  
+       }  #5B
        # what to do when the phase is confident - need to do this for both substitutions and indels
     }#4B  
   }#3B
