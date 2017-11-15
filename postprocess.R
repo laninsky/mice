@@ -44,7 +44,7 @@ for (i in 2:(dim(inputmat)[1])) {
 outputmat <- inputmatrix[,c(((length(seq(1,length(input_fasta),2)))+1),ref_column)]
   
 #pulling in the vcf to work out if sites can be confidently phased or not  
-for (i in samplenames) {
+for (i in samplenames) { #2A
   #Getting a matrix together for the VCF file per sample
   VCF_name <- paste(i,".phased_SNPs.vcf",sep="")
   tempVCF <- readLines(paste(working_dir,"/",VCF_name,sep=""))
@@ -62,14 +62,35 @@ for (i in samplenames) {
   tempsamplematrix[,1] <- outputmat[,1]
   tempsamplematrix[,2:3] <- inputmatrix[,samplecols]
   tempsamplematrix[1,4] <- paste(i,"_phasing",sep="")
-    for (j in 2:dim(inputmatrix)[1]) {
-      if(!(tempsamplematrix[j,2]==tempsamplematrix[j,3])) {
-        tempsamplematrix[j,4] <- "Unknown"
-      }
-    } 
+  
+  #Identifying the sites where there is more than one allele
+  for (j in 2:dim(inputmatrix)[1]) {
+    if(!(tempsamplematrix[j,2]==tempsamplematrix[j,3])) {
+      tempsamplematrix[j,4] <- "Unknown"
+    }
+  }
+  #Propogating the sequence over for sites that do not show signs of alternate alleles
+  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),5] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),2]
+  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),6] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),2]
+  
+  #Looping through the VCF file and propogating those bases to the output seq if the genotype is certain
+  for (j in 2:dim(VCFmat)[1]) {#3A
+    if(nchar(VCFmat[j,4])==nchar(gsub("PQ","",VCFmat[j,4]))) {#4A
+       if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A
+       tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),5] <- VCFmat[j,2]
+       tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),6] <- VCFmat[j,3]
+       tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),4] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
+       } else { #5AB
+       # what to do when no PQ and it is an indel  
+       }  #5B
+    } else { #4AB
+       # what to do when the phase is confident - need to do this for both substitutions and indels
+    }#4B  
+  }#3B
+}#2B  
+  
   
   #UP TO HERE ######
-  ###### what I think needs to happen now, is for any row where a "Unknown" is not found, to be copied to columns 5 and 6
   ### The Vcf file data then needs to get propogated into the tempsamplematrix
   ### If the vcf file doesn't have a PQ, then that site has the readcount suffixed to "Unknown" (e.g. "Unknown"_readcount1:readcount2) and cols 2/3 get copied to cols 5/6 (but phase is unknown)
   ### If the first site has haplotypes, they get poropgated
