@@ -101,7 +101,22 @@ for (i in samplenames) { #2A
        tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
        tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
        } else { #5AB
-       # what to do when no PQ and it is an indel  
+         # what to do when no PQ and it is an indel
+         siterows <- max(nchar(VCFmat[j,2:3]))
+         #Pad our calls out with "-" if necessary
+         if(nchar(VCFmat[j,2])<siterows) {
+            VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+         }
+         if(nchar(VCFmat[j,3])<siterows) {
+           VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+         }
+         read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+         # For each of the sites involved in the indel, paste this in to rows 6 and 7
+         for(k in 0:(siterows-1)) {
+           tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),6] <- unlist(strsplit(VCFmat[j,2],""))[k+1]
+           tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),7] <- unlist(strsplit(VCFmat[j,3],""))[k+1]
+           tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),5] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
+         }
        }  #5B
     } else { #4AB  If it IS a quality genotype (PQ is present)
        if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A If it doesn't involve an indel
