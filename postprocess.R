@@ -41,7 +41,7 @@ for (i in 2:(dim(inputmat)[1])) {
 }
 
 #Getting the output matrix ready. This is going to have the ref_pos in the first column, ref base in the next
-outputmat <- inputmatrix[,c(((length(seq(1,length(input_fasta),2)))+1),ref_column)]
+outputmat <- inputmat[,c(((length(seq(1,length(input_fasta),2)))+1),ref_column)]
   
 #pulling in the vcf to work out if sites can be confidently phased or not  
 for (i in samplenames) { #2A
@@ -57,21 +57,23 @@ for (i in samplenames) { #2A
   VCFmat[,5] <- unlist(strsplit(tempVCF,"\t"))[seq(10,length(unlist(strsplit(tempVCF,"\t"))),10)]
   
   #Pulling out the sequence for the sample we are interested in, so we can get the phasing blocks defined
-  samplecols <- c(which(inputmatrix[1,] %in% paste(">",i,".1",sep="")),which(inputmatrix[1,] %in% paste(">",i,".2",sep="")))
-  tempsamplematrix <- matrix(NA,ncol=7,nrow=dim(inputmatrix)[1])
+  samplecols <- c(which(inputmat[1,] %in% paste(">",i,".1",sep="")),which(inputmat[1,] %in% paste(">",i,".2",sep="")))
+  tempsamplematrix <- matrix(NA,ncol=7,nrow=dim(inputmat)[1])
   tempsamplematrix[,1] <- outputmat[,1]
-  tempsamplematrix[,3:4] <- inputmatrix[,samplecols]
+  tempsamplematrix[,3:4] <- inputmat[,samplecols]
   tempsamplematrix[1,5] <- paste(i,"_phasing",sep="")
+  tempsamplematrix[1,6] <- paste(i,"_hap1.fa",sep="")
+  tempsamplematrix[1,7] <- paste(i,"_hap2.fa",sep="")
   
   #Identifying the sites where there is more than one allele
-  for (j in 2:dim(inputmatrix)[1]) {
+  for (j in 2:dim(inputmat)[1]) {
     if(!(tempsamplematrix[j,3]==tempsamplematrix[j,4])) {
       tempsamplematrix[j,5] <- "Unknown"
     }
   }
   #Propogating the sequence over for sites that do not show signs of alternate alleles
-  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),6] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),3]
-  tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),7] <- tempsamplematrix[(which(is.na(tempsamplematrix[,4]))),3]
+  tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),6] <- tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),3]
+  tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),7] <- tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),3]
   
   #Getting the reference relative to the sample.2.fa, because this is what the VCF is relative to
   tempsamplematrix[1,2] <- "ref_sample"
@@ -91,49 +93,124 @@ for (i in samplenames) { #2A
   hapmat <- NULL
   
   #Looping through the VCF file and propogating those bases to the output seq if the genotype is certain
-  for (j in 1:dim(VCFmat)[1]) {#3A
-    if(nchar(VCFmat[j,4])==nchar(gsub("PQ","",VCFmat[j,4]))) {#4A
-       if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A
+  for (j in 1:dim(VCFmat)[1]) {#3A For each site in the VCF matrix
+    if(nchar(VCFmat[j,4])==nchar(gsub("PQ","",VCFmat[j,4]))) {#4A If it is NOT a quality genotype (PQ is NOT present)
+       if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A If it isn't an indel (the number of characters equals each other)
+       #Then just copy the original reads to the last columns. Prefix the "Unknown" reads with the read depth for each allele
        tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
        tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
        tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
        } else { #5AB
        # what to do when no PQ and it is an indel  
        }  #5B
-    } else { #4AB
-       if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A
-          haps <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[5],","))
-          if(is.null(hapmat)) {
+    } else { #4AB  If it IS a quality genotype (PQ is present)
+       if(nchar(VCFmat[j,2])==nchar(VCFmat[j,3])) {#5A If it doesn't involve an indel
+          haps <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[5],",")) # Get the two haplotypes from VCFmat[,5]
+          if(is.null(hapmat)) {# 6A If we haven't discovered any haplotypes yet
+            #Then make the haplotype for this site the first entry in our hapmat
             hapmat <- t(as.matrix(haps))
+            #Then just copy the original reads to the last columns. Combine haplotype name with the read depth for each allele
             tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
             tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
             read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
             tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
-          } else {
-            if(haps[1] %in% hapmat) {
-              if(haps[1] %in% hapmat[,1]) {
+          } else { #6AB If we have previosly logged haplotypes
+            if(haps[1] %in% hapmat) { #7A If this haplotype is one that we have previously logged
+              if(haps[1] %in% hapmat[,1]) { #8A If the alleles are the same way around in this site as previous
+                #Then just copy the original reads to the last columns. Combine haplotype name with the read depth for each allele
                 tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
                 tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
                 read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
                 tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
-              } else {
-                
-                
-            } else {
+              } else { #8AB If the alleles are the other way around
+                #Then invert the order when copying to the last columns. Combine (inverted) haplotype name with the read depth for each allele
+                tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,3]
+                tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,2]
+                read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+                tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[2],"_",read_depth[2],":",haps[1],"_",read_depth[1],sep="")
+              } #8B               
+            } else { #7AB If the haplotype is one we HAVEN'T previously logged
+              #Add the haplotype to our hapmat
               hapmat <- rbind(hapmat,haps)
+              #Then just copy the original reads to the last columns. Combine haplotype name with the read depth for each allele
               tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),6] <- VCFmat[j,2]
               tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),7] <- VCFmat[j,3]
               read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
               tempsamplematrix[(which(tempsamplematrix[,2]==VCFmat[j,1])),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+            } #7B
+         } #6B   
+       } else { #5AB If it does involve an indel
+          haps <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[5],","))
+          if(is.null(hapmat)) { # 6A If we haven't discovered any haplotypes yet
+            #Then make the haplotype for this site the first entry in our hapmat
+            hapmat <- t(as.matrix(haps))
+            #Find the number of sites our indel covers
+            siterows <- max(nchar(VCFmat[j,2:3]))
+            #Pad our calls out with "-" if necessary
+            if(nchar(VCFmat[j,2])<siterows) {
+               VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
             }
-              
-          #tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),5] <- VCFmat[j,2]
-          #tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),6] <- VCFmat[j,3]
-          #tempsamplematrix[(which(tempsamplematrix[,1]==VCFmat[j,1])),4] <- paste("Unknown_",gsub(",",":",unlist(strsplit(VCFmat[j,5],":"))[2]),sep="")
-       } else { #5AB
-       # what to do when PQ and it is an indel  
-       }  #5B
-       # what to do when the phase is confident - need to do this for both substitutions and indels
+            if(nchar(VCFmat[j,3])<siterows) {
+              VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+            }
+            read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+            # For each of the sites involved in the indel, paste this in to rows 6 and 7
+            for(k in 0:(siterows-1)) {
+              tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),6] <- unlist(strsplit(VCFmat[j,2],""))[k+1]
+              tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),7] <- unlist(strsplit(VCFmat[j,3],""))[k+1]
+              tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+            }
+          } else {  #6AB Or if we have discovered haplotypes
+            if(haps[1] %in% hapmat) { #7A and particularly if we have discovered this specific haplotype
+              if(haps[1] %in% hapmat[,1]) {# 8A and the VCF is in the same order as our previous haplotype
+                #Then do the same steps as when no previous haplotypes had been discovered
+                siterows <- max(nchar(VCFmat[j,2:3]))
+                if(nchar(VCFmat[j,2])<siterows) {
+                  VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+                }
+                if(nchar(VCFmat[j,3])<siterows) {
+                  VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+                }
+                read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+                for(k in 0:(siterows-1)) {
+                  tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),6] <- unlist(strsplit(VCFmat[j,2],""))[k+1]
+                  tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),7] <- unlist(strsplit(VCFmat[j,3],""))[k+1]
+                  tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+                }                
+              } else {  #8AB OR if the VCFmat has the haplotypes in the opposite order then do the same thing but invert the calls
+                siterows <- max(nchar(VCFmat[j,2:3]))
+                if(nchar(VCFmat[j,2])<siterows) {
+                  VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+                }
+                if(nchar(VCFmat[j,3])<siterows) {
+                  VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+                }
+                read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+                for(k in 0:(siterows-1)) {
+                  tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),6] <- unlist(strsplit(VCFmat[j,3],""))[k+1]
+                  tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),7] <- unlist(strsplit(VCFmat[j,2],""))[k+1]
+                  tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),5] <- paste(haps[2],"_",read_depth[2],":",haps[1],"_",read_depth[1],sep="")
+                }
+              }#8B
+           } else { #7AB OR, if we haven't previously discovered this haplotype   
+              #Add this haplotype to the pile, and then do the same steps as previous
+              hapmat <- rbind(hapmat,haps)
+              siterows <- max(nchar(VCFmat[j,2:3]))
+              if(nchar(VCFmat[j,2])<siterows) {
+                  VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+              }
+              if(nchar(VCFmat[j,3])<siterows) {
+                  VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+              }
+              read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
+              for(k in 0:(siterows-1)) {
+                tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),6] <- unlist(strsplit(VCFmat[j,2],""))[k+1]
+                tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),7] <- unlist(strsplit(VCFmat[j,3],""))[k+1]
+                tempsamplematrix[((which(tempsamplematrix[,2]==VCFmat[j,1]))+k),5] <- paste(haps[1],"_",read_depth[1],":",haps[2],"_",read_depth[2],sep="")
+              }
+           }#7B
+         }#6B   
+       }#5B
     }#4B  
   }#3B
 }#2B  
