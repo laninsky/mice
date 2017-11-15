@@ -42,11 +42,16 @@ for (i in 2:(dim(outputmat)[1])) {
  
 #pulling in the vcf to work out if sites can be confidently phased or not  
 for (i in samplenames) {
+  #Getting a matrix together for the VCF file per sample
   VCF_name <- paste(i,".phased_SNPs.vcf",sep="")
   tempVCF <- readLines(paste(working_dir,"/",VCF_name,sep=""))
   tempVCF <- tempVCF[grep("^\\#",tempVCF,invert=TRUE)]
-  VCFmat <- matrix((unlist(strsplit(gsub("\\..*GT","",gsub("^.*?\t","",tempVCF)),"\t"))),byrow=TRUE,ncol=3,nrow=length(gsub("\\..*GT","",gsub("^.*?\t","",tempVCF))))
-  
+  VCFmat <- matrix(NA,ncol=5,nrow=length(gsub("\\..*GT","",gsub("^.*?\t","",tempVCF))))
+  VCFmat[,1] <- unlist(strsplit(tempVCF,"\t"))[seq(2,length(unlist(strsplit(tempVCF,"\t"))),10)]
+  VCFmat[,2] <- unlist(strsplit(tempVCF,"\t"))[seq(4,length(unlist(strsplit(tempVCF,"\t"))),10)]
+  VCFmat[,3] <- unlist(strsplit(tempVCF,"\t"))[seq(5,length(unlist(strsplit(tempVCF,"\t"))),10)]
+  VCFmat[,4] <- unlist(strsplit(tempVCF,"\t"))[seq(9,length(unlist(strsplit(tempVCF,"\t"))),10)]
+  VCFmat[,5] <- unlist(strsplit(tempVCF,"\t"))[seq(10,length(unlist(strsplit(tempVCF,"\t"))),10)]
   
   
   M1 <- strsplit(readLines(paste(working_dir,"/",M1_name,sep=""))[2],"")[[1]]
