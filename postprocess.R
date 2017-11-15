@@ -12,34 +12,37 @@ samplenames <- unique(gsub(".phased_SNPs.vcf","",list.files(working_dir, pattern
 input_fasta <- readLines(paste(working_dir,"/","combined_aligned.fasta",sep=""))
 nochars <- length(strsplit(input_fasta[2],"")[[1]])
 
-#creating an outputmatrix which will have a column for each sequence, the relative ref_pos, and whether the sites have been solidly phased per sample 
-outputmat <- matrix(NA,nrow=(nochars+1),ncol=(length(seq(1,length(input_fasta),2))+length(samplenames)+1))
-outputmat[1,1:(length(seq(1,length(input_fasta),2)))] <- input_fasta[(seq(1,length(input_fasta),2))]
+#creating an inputmatrix which will have a column for each sequence and the relative ref_pos
+inputmat <- matrix(NA,nrow=(nochars+1),ncol=(length(seq(1,length(input_fasta),2))+1))
+inputmat[1,1:(length(seq(1,length(input_fasta),2)))] <- input_fasta[(seq(1,length(input_fasta),2))]
 
 #populating the rows with sequence from the fasta file  
 for (i in 1:(length(seq(1,length(input_fasta),2)))) {
-  outputmat[2:(dim(outputmat)[1]),i] <- strsplit(input_fasta[i*2],"")[[1]]
+  inputmat[2:(dim(inputmat)[1]),i] <- strsplit(input_fasta[i*2],"")[[1]]
 }
 
 #finding out what the reference column is (not present in the vcf sample names)
-ref_column <- which(!(gsub("\\..*","",gsub(">","",outputmat[1,]))[1:(length(seq(1,length(input_fasta),2)))] %in% samplenames))
+ref_column <- which(!(gsub("\\..*","",gsub(">","",inputmat[1,]))[1:(length(seq(1,length(input_fasta),2)))] %in% samplenames))
 
 #creating a column giving the position relative to the reference sequence  
-outputmat[1,((length(seq(1,length(input_fasta),2)))+1)] <- "ref_pos"
+inputmat[1,((length(seq(1,length(input_fasta),2)))+1)] <- "ref_pos"
 
 #populating this column - giving indel positions "compound" sites e.g. 484, 484_1, 484_2 so they are still relative to the reference  
 ref_site <- 1
-for (i in 2:(dim(outputmat)[1])) {
-  if(!(outputmat[i,ref_column]=="-")) {
-    outputmat[i,((length(seq(1,length(input_fasta),2)))+1)] <- ref_site
+for (i in 2:(dim(inputmat)[1])) {
+  if(!(inputmat[i,ref_column]=="-")) {
+    inputmat[i,((length(seq(1,length(input_fasta),2)))+1)] <- ref_site
     ref_site <- ref_site + 1
     site_suffix <- 1
   } else {
-    outputmat[i,((length(seq(1,length(input_fasta),2)))+1)] <- paste((ref_site-1),"_",site_suffix,sep="")
+    inputmat[i,((length(seq(1,length(input_fasta),2)))+1)] <- paste((ref_site-1),"_",site_suffix,sep="")
     site_suffix <- site_suffix + 1    
   }
 }
- 
+
+#Getting the output matrix ready. This is going to have the ref_pos in the first column, ref base in the next
+outputmat <- inputmatrix[,c(((length(seq(1,length(input_fasta),2)))+1),ref_column)]
+  
 #pulling in the vcf to work out if sites can be confidently phased or not  
 for (i in samplenames) {
   #Getting a matrix together for the VCF file per sample
@@ -52,6 +55,33 @@ for (i in samplenames) {
   VCFmat[,3] <- unlist(strsplit(tempVCF,"\t"))[seq(5,length(unlist(strsplit(tempVCF,"\t"))),10)]
   VCFmat[,4] <- unlist(strsplit(tempVCF,"\t"))[seq(9,length(unlist(strsplit(tempVCF,"\t"))),10)]
   VCFmat[,5] <- unlist(strsplit(tempVCF,"\t"))[seq(10,length(unlist(strsplit(tempVCF,"\t"))),10)]
+  
+  #Pulling out the sequence for the sample we are interested in, so we can get the phasing blocks defined
+  samplecols <- c(which(inputmatrix[1,] %in% paste(">",i,".1",sep="")),which(inputmatrix[1,] %in% paste(">",i,".2",sep="")))
+  tempsamplematrix <- matrix(NA,ncol=6,nrow=dim(inputmatrix)[1])
+  tempsamplematrix[,1] <- outputmat[,1]
+  tempsamplematrix[,2:3] <- inputmatrix[,samplecols]
+  tempsamplematrix[1,4] <- paste(i,"_phasing",sep="")
+    for (j in 2:dim(inputmatrix)[1]) {
+      if(!(tempsamplematrix[j,2]==tempsamplematrix[j,3])) {
+        tempsamplematrix[j,4] <- "Unknown"
+      }
+    } 
+  
+  #UP TO HERE ######
+  ###### what I think needs to happen now, is for any row where a "Unknown" is not found, to be copied to columns 5 and 6
+  ### The Vcf file data then needs to get propogated into the tempsamplematrix
+  ### If the vcf file doesn't have a PQ, then that site has the readcount suffixed to "Unknown" (e.g. "Unknown"_readcount1:readcount2) and cols 2/3 get copied to cols 5/6 (but phase is unknown)
+  ### If the first site has haplotypes, they get poropgated
+  ### If it does have a PQ, the order of the haplotypes needs to get saved in a variable (so it can be checked later on)
+  ### The respective bases need to get put into the appropriate columns in 5 and 6
+  ### In the samplename_phasing column I think the output should be formatted the following
+  ### Hapname1_readcount:Hapname2_readcount
+  ### Column 5 always corresponds to Hapname1 and Column 6 always corresponds to Hapname6
+  
+  ### Need to deal with underscore rows
+  ### After that is done, need to find all places with "Unknown" - both counting upwards and downwards from that point, the "Unknown" spreads
+  ### After this, can push through the matrix copying the phased state above
   
   
   M1 <- strsplit(readLines(paste(working_dir,"/",M1_name,sep=""))[2],"")[[1]]
