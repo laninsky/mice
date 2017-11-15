@@ -18,7 +18,7 @@ outputmat[1,1:(length(seq(1,length(input_fasta),2)))] <- input_fasta[(seq(1,leng
 
 #populating the rows with sequence from the fasta file  
 for (i in 1:(length(seq(1,length(input_fasta),2)))) {
-  outputmat[2:(dim(outputmat)[1]),(i+1)] <- strsplit(input_fasta[i*2],"")[[1]]
+  outputmat[2:(dim(outputmat)[1]),i] <- strsplit(input_fasta[i*2],"")[[1]]
 }
 
 #finding out what the reference column is (not present in the vcf sample names)
@@ -40,15 +40,15 @@ for (i in 2:(dim(outputmat)[1])) {
   }
 }
  
-  
-  
-  
-  
-  
+#pulling in the vcf to work out if sites can be confidently phased or not  
 for (i in samplenames) {
-  M1_name <- paste(i,".1.fa",sep="")
-  M2_name <- paste(i,".2.fa",sep="")
   VCF_name <- paste(i,".phased_SNPs.vcf",sep="")
+  tempVCF <- readLines(paste(working_dir,"/",VCF_name,sep=""))
+  tempVCF <- tempVCF[grep("^\\#",tempVCF,invert=TRUE)]
+  VCFmat <- matrix((unlist(strsplit(gsub("\\..*GT","",gsub("^.*?\t","",tempVCF)),"\t"))),byrow=TRUE,ncol=3,nrow=length(gsub("\\..*GT","",gsub("^.*?\t","",tempVCF))))
+  
+  
+  
   M1 <- strsplit(readLines(paste(working_dir,"/",M1_name,sep=""))[2],"")[[1]]
   output <- matrix(NA,ncol=3,nrow=length(M1))
   output[,1] <- M1
