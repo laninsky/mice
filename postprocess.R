@@ -1,3 +1,5 @@
+#Still got some bugs I'm working out
+
 #Expecting the following files (outputs from the previous step): 
 #combined_aligned.fasta - an aligned fasta file with the two mitogenomes titled *.1 and *.2.fa for each sample as well as the reference sample. Each sequence should only span one line
 #For each phased sample, a vcf file prefixed with sample name showing the quality/phase of the various genotypes (suffixed *.phased_SNPs.vcf)
@@ -111,10 +113,10 @@ for (i in samplenames) { #2A
          siterows <- max(nchar(VCFmat[j,2:3]))
          #Pad our calls out with "-" if necessary
          if(nchar(VCFmat[j,2])<siterows) {
-            VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+            VCFmat[j,2] <- paste(VCFmat[j,2],paste(rep("-",(siterows-nchar(VCFmat[j,2]))),collapse=""),sep="")
          }
          if(nchar(VCFmat[j,3])<siterows) {
-           VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+           VCFmat[j,3] <- paste(VCFmat[j,3],paste(rep("-",(siterows-nchar(VCFmat[j,3]))),collapse=""),sep="")
          }
          read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
          # For each of the sites involved in the indel, paste this in to rows 6 and 7
@@ -169,10 +171,10 @@ for (i in samplenames) { #2A
             siterows <- max(nchar(VCFmat[j,2:3]))
             #Pad our calls out with "-" if necessary
             if(nchar(VCFmat[j,2])<siterows) {
-               VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+               VCFmat[j,2] <- paste(VCFmat[j,2],paste(rep("-",(siterows-nchar(VCFmat[j,2]))),collapse=""),sep="")
             }
             if(nchar(VCFmat[j,3])<siterows) {
-              VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+              VCFmat[j,3] <- paste(VCFmat[j,3],paste(rep("-",(siterows-nchar(VCFmat[j,3]))),collapse=""),sep="")
             }
             read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
             # For each of the sites involved in the indel, paste this in to rows 6 and 7
@@ -187,10 +189,10 @@ for (i in samplenames) { #2A
                 #Then do the same steps as when no previous haplotypes had been discovered
                 siterows <- max(nchar(VCFmat[j,2:3]))
                 if(nchar(VCFmat[j,2])<siterows) {
-                  VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+                  VCFmat[j,2] <- paste(VCFmat[j,2],paste(rep("-",(siterows-nchar(VCFmat[j,2]))),collapse=""),sep="")
                 }
                 if(nchar(VCFmat[j,3])<siterows) {
-                  VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+                  VCFmat[j,3] <- paste(VCFmat[j,3],paste(rep("-",(siterows-nchar(VCFmat[j,3]))),collapse=""),sep="")
                 }
                 read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
                 for(k in 0:(siterows-1)) {
@@ -201,10 +203,10 @@ for (i in samplenames) { #2A
               } else {  #8AB OR if the VCFmat has the haplotypes in the opposite order then do the same thing but invert the calls
                 siterows <- max(nchar(VCFmat[j,2:3]))
                 if(nchar(VCFmat[j,2])<siterows) {
-                  VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+                  VCFmat[j,2] <- paste(VCFmat[j,2],paste(rep("-",(siterows-nchar(VCFmat[j,2]))),collapse=""),sep="")
                 }
                 if(nchar(VCFmat[j,3])<siterows) {
-                  VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+                  VCFmat[j,3] <- paste(VCFmat[j,3],paste(rep("-",(siterows-nchar(VCFmat[j,3]))),collapse=""),sep="")
                 }
                 read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
                 for(k in 0:(siterows-1)) {
@@ -218,10 +220,10 @@ for (i in samplenames) { #2A
               hapmat <- rbind(hapmat,haps)
               siterows <- max(nchar(VCFmat[j,2:3]))
               if(nchar(VCFmat[j,2])<siterows) {
-                  VCFmat[j,2] <- paste(VCFmat[j,2],rep("-",(siterows-nchar(VCFmat[j,2]))),sep="")
+                  VCFmat[j,2] <- paste(VCFmat[j,2],paste(rep("-",(siterows-nchar(VCFmat[j,2]))),collapse=""),sep="")
               }
               if(nchar(VCFmat[j,3])<siterows) {
-                  VCFmat[j,3] <- paste(VCFmat[j,3],rep("-",(siterows-nchar(VCFmat[j,3]))),sep="")
+                  VCFmat[j,3] <- paste(VCFmat[j,3],paste(rep("-",(siterows-nchar(VCFmat[j,3]))),collapse=""),sep="")
               }
               read_depth <- unlist(strsplit(unlist(strsplit(VCFmat[j,5],":"))[2],","))
               for(k in 0:(siterows-1)) {
@@ -289,54 +291,22 @@ for (i in samplenames) { #2A
   } #4B
 } #3B 
 
-  
-        
-  #Add indel rows back in
+for (j in 2:(dim(tempsamplematrix)[1])) { #3A For each row
+  if(is.na(tempsamplematrix[j,5])) { #4A  NA rows
+    k <- 1
+    while(is.na(tempsamplematrix[(j+k),5])) {
+      k <- k+1
+    }
+    if(unlist(strsplit(tempsamplematrix[(j+k),5],"_"))[1]==unlist(strsplit(tempsamplematrix[(j-1),5],"_"))[1]) {
+      tempsamplematrix[j:(j+k-1),5] <- tempsamplematrix[(j-1),5]
+    } else {
+      tempsamplematrix[j:(j+k-1),5] <- "Unknown"
+    }
+  }
+}  
+outputmat <- cbind(outputmat,tempsamplematrix[,5:7])
 }#2B  
-  
-  
-  #UP TO HERE ######
-  ### The Vcf file data then needs to get propogated into the tempsamplematrix
-  ### If the vcf file doesn't have a PQ, then that site has the readcount suffixed to "Unknown" (e.g. "Unknown"_readcount1:readcount2) and cols 2/3 get copied to cols 5/6 (but phase is unknown)
-  ### If the first site has haplotypes, they get poropgated
-  ### If it does have a PQ, the order of the haplotypes needs to get saved in a variable (so it can be checked later on)
-  ### The respective bases need to get put into the appropriate columns in 5 and 6
-  ### In the samplename_phasing column I think the output should be formatted the following
-  ### Hapname1_readcount:Hapname2_readcount
-  ### Column 5 always corresponds to Hapname1 and Column 6 always corresponds to Hapname6
-  
-  ### Need to deal with underscore rows
-  ### After that is done, need to find all places with "Unknown" - both counting upwards and downwards from that point, the "Unknown" spreads
-  ### After this, can push through the matrix copying the phased state above
-  
-  
-  M1 <- strsplit(readLines(paste(working_dir,"/",M1_name,sep=""))[2],"")[[1]]
-  output <- matrix(NA,ncol=3,nrow=length(M1))
-  output[,1] <- M1
-  output[,2] <- (strsplit(readLines(paste(working_dir,"/",M2_name,sep=""))[2],"")[[1]])
+
 
 
 } #1B
-
- GT:AD:DP:GQ:HP:PL       
-GT 0/1:
-AD Ref - 949 Alt - 3247
-DP 4196
-GQ 99
-HP 158-1,158-2
-PL 100237,0,20504
-
-
-GT 0/1:
-AD Ref 363 Alt 1943
-DP 2306
-GQ 99
-HP 158-2,158-1
-62838,0,5211:35.01
-
-Genotype(GT):
-Allelic depths for the ref and alt alleles in the order listed(AD):
-Approximate read depth (reads with MQ=255 or with bad mates are filtered)(DP):
-Genotype Quality(GQ):
-Read-backed phasing haplotype identifiers(HP):
-Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification(PL):
