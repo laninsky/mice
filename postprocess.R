@@ -75,16 +75,20 @@ for (i in samplenames) { #2A
   tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),6] <- tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),3]
   tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),7] <- tempsamplematrix[(which(is.na(tempsamplematrix[,5]))),3]
   
+  #Removing the rows which have indels to other samples (we'll add these back in at the end)
+  indel_rows <- tempsamplematrix[(which(tempsamplematrix[,6]=="-")),]
+  tempsamplematrix <- tempsamplematrix[-(which(tempsamplematrix[,6]=="-")),]
+  
   #Getting the reference relative to the sample.2.fa, because this is what the VCF is relative to
   tempsamplematrix[1,2] <- "ref_sample"
   ref_site <- 1
-  for (i in 2:(dim(tempsamplematrix)[1])) {
-    if(!(tempsamplematrix[i,4]=="-")) {
-      tempsamplematrix[i,2] <- ref_site
+  for (j in 2:(dim(tempsamplematrix)[1])) {
+    if(!(tempsamplematrix[j,4]=="-")) {
+      tempsamplematrix[j,2] <- ref_site
       ref_site <- ref_site + 1
       site_suffix <- 1
     } else {
-      tempsamplematrix[i,2]  <- paste((ref_site-1),"_",site_suffix,sep="")
+      tempsamplematrix[j,2]  <- paste((ref_site-1),"_",site_suffix,sep="")
       site_suffix <- site_suffix + 1    
     }
   }
@@ -228,6 +232,7 @@ for (i in samplenames) { #2A
        }#5B
     }#4B  
   }#3B
+  #Add indel rows back in
 }#2B  
   
   
