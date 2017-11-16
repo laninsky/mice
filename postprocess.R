@@ -5,6 +5,8 @@
 postprocess <- function(working_dir) {#1A
 #e.g. working_dir <- "/Users/alanaalexander/Dropbox/polg_mice"
 
+library(gtools)  
+  
 #Getting the sample names from the vcf files in the folder
 samplenames <- unique(gsub(".phased_SNPs.vcf","",list.files(working_dir, pattern=".phased_SNPs.vcf")))
 
@@ -232,6 +234,63 @@ for (i in samplenames) { #2A
        }#5B
     }#4B  
   }#3B
+  #Adding alignment indel rows back in if these are present
+  if(length(indel_rows)>0) {
+    tempsamplematrix <- rbind(tempsamplematrix,indel_rows)
+    header_row <- t(as.matrix(tempsamplematrix[1,]))
+    tempsamplematrix <- tempsamplematrix[-1,]
+    tempsamplematrix <- tempsamplematrix[mixedorder(tempsamplematrix[,1]),]
+    tempsamplematrix <- rbind(header_row,tempsamplematrix)
+  }
+  
+  #Populating the "uncertainty" of phasing column
+  for (j in 2:(dim(tempsamplematrix)[1])) { #3A For each row
+    if(!(is.na(tempsamplematrix[j,5]))) { #4A ignoring NA rows
+      if(nchar(tempsamplematrix[j,5])>nchar(gsub("Unknown","",tempsamplematrix[j,5]))) { #7A Finding the rows which are uncertain
+        nacheck <- 0
+        counter <- 1
+        while(nacheck==0) { #5A while we are still encountering NAs going "up the table"
+          if (is.na(tempsamplematrix[(j-counter),5])) { #6A If it is an NA, populating it with the uncertain call
+             tempsamplematrix[(j-counter),5] <- tempsamplematrix[j,5]
+             counter <- counter + 1
+          } else { #6AB If it is an NA, triggering the nacheck
+          nacheck <- 1
+          } #6B
+       } #5B
+       nacheck <- 0
+       counter <- 1
+       while(nacheck==0) { #5A while we are still encountering NAs going "up the table"
+         if (is.na(tempsamplematrix[(j+counter),5])) { #6A If it is an NA, populating it with the uncertain call
+             tempsamplematrix[(j+counter),5] <- tempsamplematrix[j,5]
+             counter <- counter + 1
+          } else { #6AB If it is an NA, triggering the nacheck
+          nacheck <- 1
+          } #6B
+       } #5B 
+     }#4B   
+   }#7B
+ }#3B 
+ #Doing this for the end of the mitogenome too (because of artificial linearization)
+ if(!(is.na(tempsamplematrix[2,5]))) { #3A
+   if(nchar(tempsamplematrix[2,5])>nchar(gsub("Unknown","",tempsamplematrix[2,5]))) { #4A
+     if(is.na(tempsamplematrix[dim(tempsamplematrix)[1],5])) { #7A
+       tempsamplematrix[dim(tempsamplematrix)[1],5] <- tempsamplematrix[2,5]
+       nacheck <- 0
+       counter <- 1
+       while(nacheck==0) { #5A while we are still encountering NAs going "up the table"
+          if (is.na(tempsamplematrix[(dim(tempsamplematrix)[1]-counter),5])) { #6A If it is an NA, populating it with the uncertain call
+             tempsamplematrix[(dim(tempsamplematrix)[1]-counter),5] <- tempsamplematrix[2,5]
+             counter <- counter + 1
+          } else { #6AB If it is an NA, triggering the nacheck
+          nacheck <- 1
+          } #6B
+       } #5B 
+    } #7B 
+  } #4B
+} #3B 
+
+  
+        
   #Add indel rows back in
 }#2B  
   
