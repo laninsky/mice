@@ -3,7 +3,7 @@
 #For each phased sample, a vcf file prefixed with sample name showing the quality/phase of the various genotypes (suffixed *.phased_SNPs.vcf)
 
 postprocess <- function(working_dir) {#1A
-#e.g. working_dir <- "/Users/alanaalexander/Dropbox/polg_mice"
+#e.g. postprocess("/Users/alanaalexander/Dropbox/polg_mice")
 
 library(gtools)  
   
@@ -44,9 +44,13 @@ for (i in 2:(dim(inputmat)[1])) {
 
 #Getting the output matrix ready. This is going to have the ref_pos in the first column, ref base in the next
 outputmat <- inputmat[,c(((length(seq(1,length(input_fasta),2)))+1),ref_column)]
-  
+
+sampcount <- 1  
 #pulling in the vcf to work out if sites can be confidently phased or not  
 for (i in samplenames) { #2A
+  print(paste("Up to sample",i,"(",sampcount,"out of a total of",length(samplenames),")"))
+  sampcount <- sampcount + 1
+  flush.console()
   #Getting a matrix together for the VCF file per sample
   VCF_name <- paste(i,".phased_SNPs.vcf",sep="")
   tempVCF <- readLines(paste(working_dir,"/",VCF_name,sep=""))
