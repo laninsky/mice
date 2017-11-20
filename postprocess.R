@@ -1,5 +1,3 @@
-#Still got some bugs I'm working out
-
 #Expecting the following files (outputs from the previous step): 
 #combined_aligned.fasta - an aligned fasta file with the two mitogenomes titled *.1 and *.2.fa for each sample as well as the reference sample. Each sequence should only span one line
 #For each phased sample, a vcf file prefixed with sample name showing the quality/phase of the various genotypes (suffixed *.phased_SNPs.vcf)
@@ -252,22 +250,30 @@ for (i in samplenames) { #2A
         nacheck <- 0
         counter <- 1
         while(nacheck==0) { #5A while we are still encountering NAs going "up the table"
-          if (is.na(tempsamplematrix[(j-counter),5])) { #6A If it is an NA, populating it with the uncertain call
-             tempsamplematrix[(j-counter),5] <- tempsamplematrix[j,5]
-             counter <- counter + 1
-          } else { #6AB If it is an NA, triggering the nacheck
-          nacheck <- 1
-          } #6B
+          if((j-counter)>=1) { #>1A
+            if (is.na(tempsamplematrix[(j-counter),5])) { #6A If it is an NA, populating it with the uncertain call
+              tempsamplematrix[(j-counter),5] <- tempsamplematrix[j,5]
+              counter <- counter + 1
+            } else { #6AB If it is an NA, triggering the nacheck
+              nacheck <- 1
+            } #6B
+          } else { #>1AB
+            nacheck <- 1
+          }  #>1B 
        } #5B
        nacheck <- 0
        counter <- 1
-       while(nacheck==0) { #5A while we are still encountering NAs going "up the table"
-         if (is.na(tempsamplematrix[(j+counter),5])) { #6A If it is an NA, populating it with the uncertain call
-             tempsamplematrix[(j+counter),5] <- tempsamplematrix[j,5]
-             counter <- counter + 1
-          } else { #6AB If it is an NA, triggering the nacheck
-          nacheck <- 1
-          } #6B
+       while(nacheck==0) { #5A while we are still encountering NAs going "down the table"
+         if((j+counter)<=(dim(tempsamplematrix)[1])) { #>1A
+            if (is.na(tempsamplematrix[(j+counter),5])) { #6A If it is an NA, populating it with the uncertain call
+              tempsamplematrix[(j+counter),5] <- tempsamplematrix[j,5]
+              counter <- counter + 1
+            } else { #6AB If it is an NA, triggering the nacheck
+              nacheck <- 1
+            } #6B
+          } else { #>1AB
+            nacheck <- 1
+          }  #>1B           
        } #5B 
      }#4B   
    }#7B
@@ -307,6 +313,6 @@ for (j in 2:(dim(tempsamplematrix)[1])) { #3A For each row
 outputmat <- cbind(outputmat,tempsamplematrix[,5:7])
 }#2B  
 
-
+write.table(outputmat,"phased_mito_haps.txt",quote=FALSE,row.names=FALSE,col.names=FALSE)
 
 } #1B
