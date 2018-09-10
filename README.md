@@ -37,5 +37,5 @@ VAP = what the VSL column is called
 
 e.g.
 ```
-reformatting_sperm_csv_files("/Users/alanaalexander/Dropbox/polg_mice/Polg_mice","mtDNA","Sample","VCL","Is valid","VSL","VAP")
+reformatting_sperm_csv_files("/Users/alanaalexander/Dropbox/polg_mice/Polg_sperm","mtDNA","Sample","VCL","Is.valid","VSL","VAP")
 ```
