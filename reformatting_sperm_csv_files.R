@@ -1,5 +1,5 @@
-reformatting_sperm_csv_files <- function(working_dir,subfolder_variable,Band,VCL,Is.valid,VSL,VAP) {
-  #e.g. reformatting_sperm_csv_files("/Users/alanaalexander/Dropbox/polg_mice/Polg_mice","mtDNA","Sample","VCL","Is valid","VSL","VAP")
+reformatting_sperm_csv_files <- function(working_dir,subfolder,Band,VCL,Is.valid,VSL,VAP) {
+  #e.g. reformatting_sperm_csv_files("/Users/alanaalexander/Dropbox/polg_mice/Polg_sperm","mtDNA","Sample","VCL","Is.valid","VSL","VAP")
   setwd(working_dir)
   files <- list.files("./","*.csv")
   dir.create(paste(working_dir,"/sperm_analysis_working_dir/",sep=""))
