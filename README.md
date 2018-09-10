@@ -19,7 +19,7 @@ The code in the current repository reads in a folder full of csv files, creates 
 
 Usage:
 ```
-reformatting_sperm_csv_files(working_dir,subfolder_variable,Band,VCL,Is.valid,VSL,VAP)
+reformatting_sperm_csv_files(working_dir,subfolder,Band,VCL,Is.valid,VSL,VAP)
 ```
 Where working_dir = location where csv files are stored
 
