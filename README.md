@@ -1,9 +1,7 @@
 # reformatting_sperm_csv_files
 Reformatting sperm velocity csv files to make them compatible with sperm_analysis code
 
-sperm_analysis expects separate subfolders within a defined working directory. Each of these subfolders should contain the csv files for the separate populations to be compared (e.g. birds from each different location contained in different subfolders; mice with different haplotypes containd in different subfolders).
-
-In each of the csv files, sperm_analysis expects the following column headers to be located in the same column position across files:
+sperm_analysis expects separate subfolders within a defined working directory. Each of these subfolders should contain the csv files for the separate populations to be compared (e.g. birds from each different location contained in different subfolders; mice with different haplotypes containd in different subfolders). In each of the csv files, sperm_analysis expects the following column headers to be located in the same column position across files:
 Band
 VCL
 Is.valid
@@ -11,7 +9,7 @@ VSL
 VAP
 (Note, "Band" is equivalent to an individual and/or sample ID).
 
-The code in the current repository reads in a folder full of csv files, creates a working directory (working_dir), with subfolders corresponding the variable sperm speed will be compared across (user defined). It will spit out csv files into the appropriate working directories, renaming them if necessary).
+The code in the current repository reads in a folder full of csv files, creates a working directory (working_dir), with subfolders corresponding the variable sperm speed will be compared across (user defined). It will spit out csv files into the appropriate working directories, renaming the columns if necessary. Note, column names should not have spaces in their names.
 
 Usage:
 ```
