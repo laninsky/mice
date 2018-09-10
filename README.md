@@ -9,7 +9,7 @@ VSL
 VAP
 (Note, "Band" is equivalent to an individual and/or sample ID).
 
-The code in the current repository reads in a folder full of csv files, creates a working directory (working_dir), with subfolders corresponding the variable sperm speed will be compared across (user defined). It will spit out csv files into the appropriate working directories, renaming the columns if necessary. Note, column names should not have spaces in their names.
+The code in the current repository reads in a folder full of csv files, creates a working directory (sperm_analysis_working_dir), with subfolders corresponding the variable sperm speed will be compared across (user defined). It will spit out csv files into the appropriate working directories, renaming the columns if necessary. Note, column names should not have spaces in their names.
 
 Usage:
 ```
