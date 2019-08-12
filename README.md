@@ -1,5 +1,5 @@
 # phasing_mitogenomes
-Trying to determine the "phase" when multiple heteroplasmic sites are recovered across a mitogenomic sequence
+Trying to determine the "phase" when multiple heteroplasmic sites are recovered across a mitogenomic sequence. Please refer to commented R code for how to implement this script.
 
 ## Version history
 v0.0 First published with mouse TBD
