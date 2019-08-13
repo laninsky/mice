@@ -1,4 +1,6 @@
 # reformatting_sperm_csv_files
+Originally at: https://github.com/laninsky/reformatting_sperm_csv_files
+
 Reformatting sperm velocity csv files to make them compatible with sperm_analysis code
 
 sperm_analysis expects separate subfolders within a defined working directory. Each of these subfolders should contain the csv files for the separate populations to be compared (e.g. birds from each different location contained in different subfolders; mice with different haplotypes containd in different subfolders). In each of the csv files, sperm_analysis expects the following column headers to be located in the same column position across files:
